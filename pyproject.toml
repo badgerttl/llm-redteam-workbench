@@ -1,0 +1,36 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "llm-redteam-workbench"
+version = "0.1.0"
+description = "Local workbench for authorized LLM red-team testing"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "LLM Red Team Workbench contributors" }]
+dependencies = [
+  "platformdirs>=4.0",
+  "rich>=13.0",
+  "textual>=0.80",
+  "typer>=0.12",
+]
+
+[project.optional-dependencies]
+dev = [
+  "hypothesis>=6.0",
+  "pytest>=8.0",
+  "pytest-cov>=5.0",
+]
+
+[project.scripts]
+llm-redteam = "prompt_mutator.cli:app"
+prompt-mutator = "prompt_mutator.cli:app"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/prompt_mutator"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

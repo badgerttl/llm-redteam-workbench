@@ -1,0 +1,12 @@
+name = "chained"
+version = 1
+count = 25
+intensity = "medium"
+min_chain_length = 2
+max_chain_length = 3
+techniques = [
+  "leetspeak", "homoglyph", "unicode_style", "fullwidth", "zero_width",
+  "whitespace", "punctuation", "random_case", "separator", "reverse",
+  "base64", "hex", "url", "combining", "normalization", "html_entity",
+  "unicode_escape",
+]
