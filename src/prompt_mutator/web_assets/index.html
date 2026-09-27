@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>LLM Red Team Workbench</title>
+  <link rel="stylesheet" href="/assets/styles.css">
+  <script src="/assets/app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#workspace">Skip to workspace</a>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">RT</span>
+      <span class="brand-copy">
+        <strong>LLM Red Team</strong>
+        <span>Workbench</span>
+      </span>
+    </div>
+    <div class="topbar-actions">
+      <span class="local-status"><span class="status-dot"></span>Local only</span>
+      <button class="icon-button help-button" id="help-toggle" type="button" aria-label="Open help" title="Profiles, intensity, and techniques">?</button>
+      <button class="icon-button" id="theme-toggle" type="button" aria-label="Switch theme" title="Switch theme">
+        <svg class="sun-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"></path></svg>
+        <svg class="moon-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.2A8.5 8.5 0 0 1 9.8 3.5 8.5 8.5 0 1 0 20.5 14.2Z"></path></svg>
+      </button>
+    </div>
+  </header>
+
+  <main id="workspace" class="page-shell">
+    <h1 class="sr-only">LLM Red Team Workbench</h1>
+
+    <section class="composer card" aria-labelledby="prompt-heading">
+      <div class="section-heading">
+        <div>
+          <span class="step-number">01</span>
+          <div>
+            <h2 id="prompt-heading">Source prompt</h2>
+            <p>Paste the exact text you want to mutate.</p>
+          </div>
+        </div>
+        <span id="character-count" class="character-count">0 characters</span>
+      </div>
+
+      <label class="sr-only" for="prompt-input">Prompt text</label>
+      <textarea id="prompt-input" spellcheck="false" placeholder="Paste a prompt to begin…" maxlength="100000"></textarea>
+
+      <div class="control-grid">
+        <label class="field">
+          <span>Profile</span>
+          <select id="profile-select" aria-describedby="profile-hint">
+            <option value="baseline">Baseline</option>
+          </select>
+          <small id="profile-hint">Balanced coverage across technique families.</small>
+        </label>
+        <label class="field">
+          <span>Intensity</span>
+          <select id="intensity-select">
+            <option value="low">Low</option>
+            <option value="medium" selected>Medium</option>
+            <option value="high">High</option>
+            <option value="max">Max</option>
+          </select>
+          <small>Controls how aggressively text is transformed.</small>
+        </label>
+        <label class="field">
+          <span>Cases</span>
+          <select id="count-select">
+            <option value="25" selected>25</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+            <option value="250">250</option>
+            <option value="500">500</option>
+            <option value="1000">1,000</option>
+          </select>
+          <small>Unique results may be lower after deduplication.</small>
+        </label>
+        <div class="generate-field">
+          <span class="control-label">Action</span>
+          <button id="generate-button" class="primary-button" type="button">
+            <span class="button-label">Generate cases</span>
+            <span class="button-spinner" aria-hidden="true"></span>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+          </button>
+          <small>Creates a retained local audit bundle.</small>
+        </div>
+      </div>
+
+      <details id="custom-techniques" class="custom-panel">
+        <summary>
+          <span><strong>Choose techniques</strong><small id="selection-summary">17 selected</small></span>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 10 4 4 4-4"></path></svg>
+        </summary>
+        <div class="panel-body">
+          <div class="panel-actions">
+            <button id="select-all" class="text-button" type="button">Select all</button>
+            <button id="clear-all" class="text-button" type="button">Clear selection</button>
+          </div>
+          <div id="technique-grid" class="technique-grid"></div>
+        </div>
+      </details>
+
+      <details id="custom-chain" class="custom-panel">
+        <summary>
+          <span><strong>Build an ordered chain</strong><small>Two required steps, one optional</small></span>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 10 4 4 4-4"></path></svg>
+        </summary>
+        <div class="chain-grid panel-body">
+          <label class="field"><span><b>01</b> First transform</span><select id="chain-step-1"><option value="">Choose technique</option></select></label>
+          <label class="field"><span><b>02</b> Second transform</span><select id="chain-step-2"><option value="">Choose technique</option></select></label>
+          <label class="field optional"><span><b>03</b> Optional transform</span><select id="chain-step-3"><option value="">No third step</option></select></label>
+        </div>
+      </details>
+    </section>
+
+    <section class="results-section" aria-labelledby="results-heading">
+      <div class="results-heading">
+        <div>
+          <span class="step-number">02</span>
+          <div>
+            <h2 id="results-heading">Generated cases</h2>
+            <p id="results-subtitle">Your results will appear here, sorted by technique.</p>
+          </div>
+        </div>
+        <div class="results-actions">
+          <div id="run-status" class="run-status" hidden>
+            <span class="status-dot"></span>
+            <span id="run-status-text"></span>
+          </div>
+          <button id="focus-results" class="focus-button" type="button" title="Focus results (Ctrl+M)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5"></path></svg>
+            <span>Focus</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="results-layout">
+        <section class="case-browser card" aria-label="Generated case list">
+          <div class="case-toolbar">
+            <label class="search-field">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg>
+              <span class="sr-only">Filter cases</span>
+              <input id="case-search" type="search" placeholder="Filter by ID, technique, or text" disabled>
+            </label>
+            <span id="case-count-badge" class="count-badge">0 cases</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr>
+                <th><button class="sort-button active" data-sort="technique_label">Technique <span>↑</span></button></th>
+                <th><button class="sort-button" data-sort="escaped">Preview <span></span></button></th>
+                <th class="row-action-heading"><span class="sr-only">Actions</span></th>
+              </tr></thead>
+              <tbody id="case-rows"></tbody>
+            </table>
+            <div id="empty-state" class="empty-state">
+              <div class="empty-illustration" aria-hidden="true"><span></span><span></span><span></span></div>
+              <h3>No cases yet</h3>
+              <p>Enter a source prompt and generate a test set to begin inspection.</p>
+            </div>
+            <div id="filter-empty-state" class="empty-state compact" hidden>
+              <h3>No matching cases</h3>
+              <p>Try a different ID, technique, or text fragment.</p>
+            </div>
+            <div id="loading-state" class="loading-state" hidden aria-live="polite">
+              <div class="skeleton-row"></div><div class="skeleton-row"></div><div class="skeleton-row"></div><div class="skeleton-row"></div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <dialog id="inspection-modal" class="inspection-modal" aria-labelledby="inspection-heading">
+      <div id="inspection-content">
+        <div class="inspection-header">
+          <div><p class="eyebrow">Case ID</p><h3 id="inspection-heading"></h3></div>
+          <div class="inspection-header-actions">
+            <span id="technique-badge" class="technique-badge"></span>
+            <button id="close-inspection" class="modal-close" type="button" aria-label="Close case inspection" title="Close">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg>
+            </button>
+          </div>
+        </div>
+        <div class="copy-actions">
+          <button id="copy-raw" class="secondary-button" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="11" height="11" rx="2"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy raw</button>
+          <button id="copy-encoded" class="secondary-button" type="button">Copy encoded</button>
+        </div>
+        <div class="inspection-scroll">
+          <section class="value-block"><div class="value-heading"><h4>Rendered</h4><span>Exact output</span></div><pre id="rendered-value"></pre></section>
+          <section class="value-block"><div class="value-heading"><h4>Encoded</h4><span>Full Unicode code-point form</span></div><pre id="encoded-value"></pre></section>
+          <section class="metadata-grid">
+            <div><span>Changed positions</span><strong id="changed-positions"></strong></div>
+            <div><span>Variant</span><strong id="variant-value"></strong></div>
+          </section>
+          <section class="code-points"><h4>Noteworthy code points</h4><div id="code-point-list"></div></section>
+        </div>
+      </div>
+    </dialog>
+
+    <dialog id="help-modal" class="help-modal" aria-labelledby="help-heading">
+      <div class="help-shell">
+        <div class="help-header">
+          <div><p class="eyebrow">Reference</p><h2 id="help-heading">Generation guide</h2></div>
+          <button id="close-help" class="modal-close" type="button" aria-label="Close help" title="Close">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg>
+          </button>
+        </div>
+        <div class="help-scroll">
+          <section class="help-section" aria-labelledby="help-profiles-heading">
+            <h3 id="help-profiles-heading">Profiles</h3>
+            <p>Profiles choose which techniques can run and whether they are chained.</p>
+            <div id="help-profiles" class="help-grid"></div>
+          </section>
+          <section class="help-section" aria-labelledby="help-intensity-heading">
+            <h3 id="help-intensity-heading">Intensity</h3>
+            <p>For techniques that select character positions, intensity controls the approximate share transformed.</p>
+            <div class="help-grid intensity-grid">
+              <article><strong>Low</strong><span>About 15% of eligible positions</span></article>
+              <article><strong>Medium</strong><span>About 40% of eligible positions</span></article>
+              <article><strong>High</strong><span>About 75% of eligible positions</span></article>
+              <article><strong>Max</strong><span>Every eligible position</span></article>
+            </div>
+          </section>
+          <section class="help-section" aria-labelledby="help-techniques-heading">
+            <h3 id="help-techniques-heading">Techniques</h3>
+            <p>Each technique produces a distinct family of prompt mutations.</p>
+            <div id="help-techniques" class="help-grid technique-help-grid"></div>
+          </section>
+        </div>
+      </div>
+    </dialog>
+  </main>
+
+  <div id="toast-region" class="toast-region" aria-live="polite" aria-atomic="true"></div>
+</body>
+</html>

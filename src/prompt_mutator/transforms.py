@@ -18,7 +18,7 @@ class Mutation:
 Transform: TypeAlias = Callable[[str, random.Random, str], Mutation]
 
 
-_INTENSITY = {"low": 0.15, "medium": 0.40, "high": 0.75}
+_INTENSITY = {"low": 0.15, "medium": 0.40, "high": 0.75, "max": 1.0}
 _LEET = {
     "a": ("4", "@"), "e": ("3",), "i": ("1", "!"),
     "o": ("0",), "s": ("5", "$"), "t": ("7", "+"),
@@ -268,7 +268,6 @@ def _base64(prompt: str, rng: random.Random, intensity: str) -> Mutation:
 
 
 def _hex(prompt: str, rng: random.Random, intensity: str) -> Mutation:
-    del intensity
     # The first form intentionally targets the common "spaces only" bypass.
     selector = rng.randrange(4)
     if selector == 0:
@@ -282,8 +281,8 @@ def _hex(prompt: str, rng: random.Random, intensity: str) -> Mutation:
         positions = tuple(range(len(prompt)))
         text = " ".join(f"0x{byte:02X}" for byte in prompt.encode("utf-8"))
         return Mutation(text, positions, {"variant": "whole", "format": "0xNN-upper-spaced"})
-    eligible = list(range(len(prompt)))
-    positions = _selected(prompt, eligible, rng, "medium")
+    eligible = [i for i, char in enumerate(prompt) if ord(char) < 128]
+    positions = _selected(prompt, eligible, rng, intensity)
     chosen = set(positions)
     text = "".join(f"\\x{ord(char):02x}" if i in chosen and ord(char) < 128 else char for i, char in enumerate(prompt))
     return Mutation(text, positions, {"variant": "mixed", "format": "\\xNN-lower"})

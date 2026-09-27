@@ -146,6 +146,20 @@ class GeneratorContractTests(unittest.TestCase):
             {"basic", "symbol-heavy", "mixed"},
         )
 
+    def test_max_intensity_transforms_every_eligible_character(self) -> None:
+        result = PromptGenerator().generate(
+            GenerationRequest(
+                prompt="test",
+                techniques=("leetspeak",),
+                count=1,
+                seed=6,
+                intensity="max",
+            )
+        )
+
+        self.assertEqual(result.cases[0].changed_positions, (0, 1, 2, 3))
+        self.assertEqual(result.cases[0].parameters["intensity"], "max")
+
     def test_percent_encoding_belongs_to_url_and_never_hex(self) -> None:
         generator = PromptGenerator()
         hex_result = generator.generate(

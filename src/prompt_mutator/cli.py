@@ -42,15 +42,59 @@ def default_runs_root() -> Path:
 
 @app.callback()
 def main(ctx: typer.Context) -> None:
-    """Launch the TUI when no automation subcommand is supplied."""
+    """Launch the local web app when no automation subcommand is supplied."""
     if ctx.invoked_subcommand is None:
-        try:
-            from .tui import run_tui
-        except ImportError as exc:
-            raise typer.ClickException(
-                "The TUI requires the 'textual' dependency. Install LLM Red Team Workbench with its standard dependencies."
-            ) from exc
-        run_tui()
+        _launch_web("127.0.0.1", 8765, (), open_browser=True)
+
+
+@app.command()
+def web(
+    host: Annotated[str, typer.Option(help="Interface to bind; use 0.0.0.0 for remote review")] = "127.0.0.1",
+    port: Annotated[int, typer.Option(min=1024, max=65535)] = 8765,
+    allowed_host: Annotated[
+        list[str] | None,
+        typer.Option("--allowed-host", help="Accepted Host header; repeat for multiple names"),
+    ] = None,
+    no_browser: Annotated[bool, typer.Option("--no-browser", is_flag=True)] = False,
+) -> None:
+    """Launch the local web interface."""
+    _launch_web(host, port, tuple(allowed_host or ()), open_browser=not no_browser)
+
+
+def _launch_web(
+    host: str,
+    port: int,
+    allowed_hosts: tuple[str, ...],
+    *,
+    open_browser: bool,
+) -> None:
+    try:
+        from .web import run_web
+    except ImportError as exc:
+        raise typer.ClickException(
+            "The web UI requires the 'starlette' and 'uvicorn' dependencies."
+        ) from exc
+    try:
+        run_web(
+            host=host,
+            port=port,
+            allowed_hosts=allowed_hosts,
+            open_browser=open_browser,
+        )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+
+
+@app.command()
+def tui() -> None:
+    """Launch the terminal interface."""
+    try:
+        from .tui import run_tui
+    except ImportError as exc:
+        raise typer.ClickException(
+            "The TUI requires the 'textual' dependency. Install LLM Red Team Workbench with its standard dependencies."
+        ) from exc
+    run_tui()
 
 
 @app.command()
@@ -58,7 +102,7 @@ def generate(
     prompt: Annotated[str | None, typer.Argument(help="Prompt text; omit or use '-' to read stdin")] = None,
     count: Annotated[int | None, typer.Option(min=1, max=10_000)] = None,
     seed: Annotated[int, typer.Option()] = 0,
-    intensity: Annotated[str | None, typer.Option(help="low, medium, or high")] = None,
+    intensity: Annotated[str | None, typer.Option(help="low, medium, high, or max")] = None,
     technique: Annotated[list[str] | None, typer.Option("--technique", "-t")] = None,
     profile: Annotated[str, typer.Option(help="Named built-in or custom profile")] = "baseline",
     profile_file: Annotated[Path | None, typer.Option(exists=True, dir_okay=False)] = None,
@@ -97,8 +141,8 @@ def generate(
     if unknown:
         raise typer.BadParameter("unknown technique(s): " + ", ".join(sorted(unknown)))
     resolved_intensity = intensity or resolved_profile.intensity
-    if resolved_intensity not in {"low", "medium", "high"}:
-        raise typer.BadParameter("intensity must be low, medium, or high")
+    if resolved_intensity not in {"low", "medium", "high", "max"}:
+        raise typer.BadParameter("intensity must be low, medium, high, or max")
     resolved_count = count or resolved_profile.count
     if all_cases:
         singles = len(selected) * 8 if resolved_profile.min_chain_length == 1 else 0

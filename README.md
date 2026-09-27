@@ -7,21 +7,25 @@ LLM endpoint. The project is designed to grow into broader test campaigns,
 evidence capture, scoring, and reporting.
 
 The primary workflow is: “I have one prompt and want multiple variations to
-try.” Run `llm-redteam` with no arguments to open the terminal UI, paste a
+try.” Run `llm-redteam` with no arguments to open the local web app, paste a
 prompt, select a profile and intensity, and generate 25 balanced cases. The
-inspection pane shows rendered and escaped forms plus Unicode code-point names.
-Raw and escaped values can be copied independently.
+sortable results table provides per-row raw and fully encoded copy actions.
+Select a row to open its inspection modal with transformation metadata and
+Unicode code-point details.
 
-Choose the TUI's `Custom techniques` profile to select an exact set of
-technique families. The scrollable picker includes a short description for
-every technique and Select all/Clear actions. Custom selections are embedded
-in the run's audit metadata but are not saved as a named TOML profile.
+Intensity controls the share of eligible character positions transformed:
+Low is approximately 15%, Medium 40%, High 75%, and Max 100%. Techniques that
+operate on whole strings or specific character classes retain those semantics.
 
-The theme selected from Textual's theme palette is remembered in the user
-configuration directory. Use the compact `+`/`−` button beside Generate or
-`Ctrl+M` to toggle the Generated Cases pane between its normal and full-screen
-layouts; `F11` is retained as a terminal-compatible fallback, and `Esc` also
-restores the normal layout.
+Choose `Custom Techniques` to select an exact set of technique families, or
+`Custom Chain` to apply one ordered sequence of two or three transforms. Custom
+selections are embedded in the run's audit metadata but are not saved as named
+TOML profiles.
+
+The web app loads no remote assets and defaults to `127.0.0.1`. It remembers
+its light or dark theme in browser-local storage. The `?` menu documents every
+profile, intensity, and technique. Use Focus or `Ctrl+M` to expand the results
+workspace; `Esc` restores the normal layout.
 
 > Prompt content and generated cases are retained in local audit bundles until
 > explicitly deleted. Treat bundles and clipboard history as sensitive data.
@@ -35,12 +39,34 @@ pipx install llm-redteam-workbench
 llm-redteam
 ```
 
+Use a different local port or avoid opening a browser automatically with:
+
+```shell
+llm-redteam web --port 9000
+llm-redteam web --no-browser
+```
+
+For temporary review from another machine, bind an external interface and
+explicitly allow the hostname or IP used in the browser:
+
+```shell
+llm-redteam web --host 0.0.0.0 --allowed-host 192.0.2.10 --no-browser
+```
+
+Remote mode does not add authentication. Keep it behind a firewall or VPN and
+do not expose it directly to the public internet.
+
+The terminal interface remains available through `llm-redteam tui`.
+
 For development:
 
 ```shell
 python -m pip install -e '.[dev]'
+playwright install chromium
 pytest
 ```
+
+The Chromium installation is required for the browser interaction tests.
 
 ## CLI
 
@@ -83,12 +109,11 @@ focuses on mixed and partial encodings, and `comprehensive` adds compatible
 two- and three-stage chains alongside single transforms. `chained` emits only
 two- and three-technique pipelines, with no single-technique cases.
 
-In the TUI, `Custom techniques` generates single-transform cases from a chosen
-set. `Custom chain` provides three ordered selectors: steps 1 and 2 are
-required, while step 3 is optional. The generator applies that exact two- or
-three-stage pipeline for every case; it does not permute the selected steps.
-Both custom configuration sections can be collapsed to return space to the
-results view.
+In both interactive interfaces, `Custom Techniques` generates single-transform
+cases from a chosen set. `Custom Chain` provides three ordered selectors: steps
+1 and 2 are required, while step 3 is optional. The generator applies that
+exact two- or three-stage pipeline for every case; it does not permute the
+selected steps. Both custom configuration sections can be collapsed.
 
 The built-in catalog includes leetspeak, curated Greek/Cyrillic homoglyphs,
 mathematical Unicode styles, full-width forms, zero-width insertion, whitespace

@@ -99,7 +99,7 @@ def _from_data(data: dict[str, Any], source: str, expected_name: str | None) -> 
     if (
         version < 1
         or count < 1
-        or intensity not in {"low", "medium", "high"}
+        or intensity not in {"low", "medium", "high", "max"}
         or not 1 <= min_chain_length <= max_chain_length <= 3
     ):
         raise ValueError(f"invalid profile settings in {source}")
