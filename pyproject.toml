@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "llm-redteam-workbench"
-version = "0.1.0"
+version = "0.2.0"
 description = "Local workbench for authorized LLM red-team testing"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -13,13 +13,17 @@ authors = [{ name = "LLM Red Team Workbench contributors" }]
 dependencies = [
   "platformdirs>=4.0",
   "rich>=13.0",
+  "starlette>=0.47",
   "textual>=0.80",
   "typer>=0.12",
+  "uvicorn>=0.30",
 ]
 
 [project.optional-dependencies]
 dev = [
   "hypothesis>=6.0",
+  "httpx>=0.27",
+  "playwright>=1.49",
   "pytest>=8.0",
   "pytest-cov>=5.0",
 ]

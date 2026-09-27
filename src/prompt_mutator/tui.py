@@ -26,31 +26,11 @@ from textual.widgets import (
 )
 
 from .audit import AuditBundle
+from .catalog import TECHNIQUE_DESCRIPTIONS, display_name
 from .cli import default_runs_root
 from .generator import PromptGenerator
 from .models import GenerationRequest, RunResult
 from .profiles import load_profile
-
-
-_TECHNIQUE_DESCRIPTIONS = {
-    "leetspeak": "letter-to-number and symbol substitutions",
-    "homoglyph": "visually similar Greek and Cyrillic characters",
-    "unicode_style": "mathematical, circled, superscript, and subscript forms",
-    "fullwidth": "full-width compatibility characters",
-    "zero_width": "invisible separators between characters",
-    "whitespace": "spacing-based character fragmentation",
-    "punctuation": "punctuation-based character fragmentation",
-    "random_case": "mixed upper- and lowercase letters",
-    "separator": "visible separators between characters",
-    "reverse": "reversed code-point order",
-    "base64": "Base64-encoded UTF-8 text",
-    "hex": "raw, 0xNN, and \\xNN hexadecimal forms",
-    "url": "whole and selective percent encoding",
-    "combining": "Unicode combining-mark noise",
-    "normalization": "NFC, NFD, NFKC, and NFKD forms",
-    "html_entity": "HTML numeric character references",
-    "unicode_escape": "\\u, \\U, and \\N{name} escape forms",
-}
 
 
 class CasesSection(Vertical):
@@ -147,7 +127,7 @@ class PromptMutatorApp(App[None]):
             with Vertical(classes="control-field", id="intensity-field"):
                 yield Label("Intensity", classes="field-label")
                 yield Select(
-                    (("Low", "low"), ("Medium", "medium"), ("High", "high")),
+                    (("Low", "low"), ("Medium", "medium"), ("High", "high"), ("Max", "max")),
                     value="medium",
                     id="intensity",
                     allow_blank=False,
@@ -172,7 +152,7 @@ class PromptMutatorApp(App[None]):
         ):
             yield SelectionList(
                 *(
-                    (f"{name} — {_TECHNIQUE_DESCRIPTIONS[name]}", name, True)
+                    (f"{name} — {TECHNIQUE_DESCRIPTIONS[name]}", name, True)
                     for name in PromptGenerator.techniques()
                 ),
                 id="custom-technique-list",
@@ -181,7 +161,7 @@ class PromptMutatorApp(App[None]):
                 yield Button("Select all", id="select-all-techniques", variant="primary")
                 yield Button("Clear selection", id="clear-techniques")
         technique_options = tuple(
-            (name.replace("_", " ").title(), name)
+            (display_name(name), name)
             for name in PromptGenerator.techniques()
         )
         with Collapsible(

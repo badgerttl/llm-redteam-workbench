@@ -23,7 +23,7 @@ class PromptGenerator:
         return technique_names() + tuple(sorted(self._extensions))
 
     def generate(self, request: GenerationRequest) -> RunResult:
-        if request.intensity not in {"low", "medium", "high"}:
+        if request.intensity not in {"low", "medium", "high", "max"}:
             raise ValueError(f"unknown intensity: {request.intensity}")
         if request.count < 1:
             raise ValueError("count must be at least 1")

@@ -5,4 +5,4 @@ from .models import GeneratedCase, GenerationRequest, RunResult
 
 __all__ = ["GeneratedCase", "GenerationRequest", "PromptGenerator", "RunResult"]
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
