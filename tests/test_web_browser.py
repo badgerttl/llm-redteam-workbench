@@ -78,6 +78,13 @@ def test_help_theme_and_responsive_modal(
     page = browser_context.new_page()
     page.goto(web_server)
 
+    expect(page.locator("#profile-select").locator("xpath=..").locator(".select-trigger")).to_be_visible()
+    intensity_dropdown = page.locator("#intensity-select").locator("xpath=..")
+    intensity_dropdown.locator(".select-trigger").click()
+    expect(intensity_dropdown.locator(".select-menu")).to_be_visible()
+    intensity_dropdown.locator('.select-option[data-value="max"]').click()
+    expect(intensity_dropdown.locator(".select-trigger")).to_contain_text("Max")
+
     page.locator("#help-toggle").click()
     expect(page.locator("#help-modal")).to_be_visible()
     expect(page.locator("#help-modal")).to_contain_text("HTML Entity")

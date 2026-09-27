@@ -185,6 +185,21 @@ select:hover, .search-field:hover { border-color: var(--line-strong); }
 select:hover { background-color: var(--surface-hover); }
 select:focus, .search-field:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 10%, transparent); outline: none; }
 select:open { border-color: var(--accent); background-color: var(--surface); }
+.custom-select { position: relative; min-width: 0; height: 44px; }
+.enhanced-select { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+.select-trigger { display: flex; width: 100%; height: 44px; align-items: center; justify-content: space-between; gap: 12px; padding: 0 13px 0 14px; border: 1px solid var(--line-strong); border-radius: var(--radius-sm); color: var(--ink); background: var(--surface); font-weight: 650; text-align: left; box-shadow: inset 0 1px 0 color-mix(in srgb, white 55%, transparent), 0 1px 2px rgba(20, 24, 35, .04); transition: border-color .16s, box-shadow .16s, background .16s; }
+[data-theme="dark"] .select-trigger { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .035), 0 1px 2px rgba(0, 0, 0, .18); }
+.select-trigger:hover { border-color: color-mix(in srgb, var(--accent) 32%, var(--line-strong)); background: var(--surface-hover); }
+.custom-select.open .select-trigger { border-color: var(--accent); background: var(--surface); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 12%, transparent); }
+.select-value { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.select-chevron { width: 9px; height: 9px; flex: 0 0 auto; margin: -4px 3px 0 0; border-right: 2px solid var(--ink-soft); border-bottom: 2px solid var(--ink-soft); transform: rotate(45deg); transition: margin .16s, transform .16s; }
+.custom-select.open .select-chevron { margin-top: 4px; transform: rotate(225deg); }
+.select-menu { position: absolute; top: calc(100% + 7px); z-index: 80; width: 100%; max-height: 280px; padding: 6px; overflow: auto; border: 1px solid var(--line-strong); border-radius: 11px; background: var(--surface-raised); box-shadow: 0 16px 40px rgba(18, 21, 31, .16), 0 3px 10px rgba(18, 21, 31, .08); }
+.custom-select.drop-up .select-menu { top: auto; bottom: calc(100% + 7px); }
+.select-option { position: relative; display: block; width: 100%; min-height: 36px; padding: 8px 32px 8px 10px; border: 0; border-radius: 7px; color: var(--ink-soft); background: transparent; font-size: 13px; font-weight: 560; text-align: left; }
+.select-option:hover, .select-option:focus-visible { color: var(--ink); background: var(--surface-hover); outline: none; }
+.select-option.selected { color: var(--accent-ink); background: var(--accent-soft); font-weight: 700; }
+.select-option.selected::after { content: "✓"; position: absolute; right: 11px; color: var(--accent); font-weight: 800; }
 .primary-button {
   display: flex;
   height: 44px;
@@ -210,7 +225,8 @@ select:open { border-color: var(--accent); background-color: var(--surface); }
 .primary-button.loading svg { display: none; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-.custom-panel { display: none; margin-top: 20px; overflow: hidden; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface-subtle); }
+.custom-panel { display: none; margin-top: 20px; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface-subtle); }
+.custom-panel:not([open]) { overflow: hidden; }
 .custom-panel.visible { display: block; }
 .custom-panel summary { display: flex; align-items: center; justify-content: space-between; padding: 15px 17px; cursor: pointer; list-style: none; user-select: none; }
 .custom-panel summary::-webkit-details-marker { display: none; }

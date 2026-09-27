@@ -7,6 +7,8 @@ const state = {
   query: "",
 };
 
+let openCustomSelect = null;
+
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
 
@@ -99,11 +101,135 @@ async function loadCatalog() {
     populateProfiles();
     populateTechniques();
     populateChains();
+    enhanceSelects();
     populateHelp();
     updateProfileUI();
   } catch (error) {
     toast(error.message, true);
     elements.generate.disabled = true;
+  }
+}
+
+function enhanceSelects() {
+  $$('select:not([data-enhanced="true"])').forEach((select) => {
+    select.dataset.enhanced = "true";
+    select.classList.add("enhanced-select");
+
+    const wrapper = document.createElement("div");
+    wrapper.className = "custom-select";
+    select.before(wrapper);
+    wrapper.append(select);
+
+    const trigger = document.createElement("button");
+    trigger.type = "button";
+    trigger.className = "select-trigger";
+    trigger.setAttribute("aria-haspopup", "listbox");
+    trigger.setAttribute("aria-expanded", "false");
+
+    const value = document.createElement("span");
+    value.className = "select-value";
+    const chevron = document.createElement("span");
+    chevron.className = "select-chevron";
+    chevron.setAttribute("aria-hidden", "true");
+    trigger.append(value, chevron);
+
+    const menu = document.createElement("div");
+    menu.className = "select-menu";
+    menu.role = "listbox";
+    menu.hidden = true;
+    const menuId = `${select.id}-menu`;
+    menu.id = menuId;
+    trigger.setAttribute("aria-controls", menuId);
+
+    for (const option of select.options) {
+      const item = document.createElement("button");
+      item.type = "button";
+      item.className = "select-option";
+      item.role = "option";
+      item.dataset.value = option.value;
+      item.textContent = option.textContent;
+      item.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        select.value = option.value;
+        select.dispatchEvent(new Event("change", { bubbles: true }));
+        closeCustomSelect();
+        trigger.focus();
+      });
+      item.addEventListener("keydown", (event) => navigateSelectOptions(event, menu, trigger));
+      menu.append(item);
+    }
+
+    const sync = () => {
+      const selected = select.selectedOptions[0];
+      value.textContent = selected?.textContent || "Choose";
+      trigger.setAttribute("aria-label", `${select.id.replaceAll("-", " ")}: ${value.textContent}`);
+      menu.querySelectorAll(".select-option").forEach((item) => {
+        const active = item.dataset.value === select.value;
+        item.classList.toggle("selected", active);
+        item.setAttribute("aria-selected", active ? "true" : "false");
+      });
+    };
+    select.addEventListener("change", sync);
+    sync();
+
+    trigger.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      if (openCustomSelect?.wrapper === wrapper) closeCustomSelect();
+      else openSelectMenu({ wrapper, trigger, menu });
+    });
+    trigger.addEventListener("keydown", (event) => {
+      if (["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) {
+        event.preventDefault();
+        if (openCustomSelect?.wrapper !== wrapper) openSelectMenu({ wrapper, trigger, menu });
+        const options = [...menu.querySelectorAll(".select-option")];
+        const selectedIndex = Math.max(0, options.findIndex((item) => item.classList.contains("selected")));
+        const target = event.key === "End" ? options.at(-1) : event.key === "Home" ? options[0] : options[selectedIndex];
+        target?.focus();
+      }
+    });
+    wrapper.append(trigger, menu);
+  });
+
+  document.addEventListener("pointerdown", (event) => {
+    if (openCustomSelect && !openCustomSelect.wrapper.contains(event.target)) closeCustomSelect();
+  });
+}
+
+function openSelectMenu(parts) {
+  closeCustomSelect();
+  openCustomSelect = parts;
+  parts.wrapper.classList.add("open");
+  parts.trigger.setAttribute("aria-expanded", "true");
+  parts.menu.hidden = false;
+  const availableBelow = window.innerHeight - parts.trigger.getBoundingClientRect().bottom;
+  parts.wrapper.classList.toggle("drop-up", availableBelow < Math.min(parts.menu.scrollHeight, 280) + 12);
+}
+
+function closeCustomSelect() {
+  if (!openCustomSelect) return;
+  openCustomSelect.wrapper.classList.remove("open", "drop-up");
+  openCustomSelect.trigger.setAttribute("aria-expanded", "false");
+  openCustomSelect.menu.hidden = true;
+  openCustomSelect = null;
+}
+
+function navigateSelectOptions(event, menu, trigger) {
+  const options = [...menu.querySelectorAll(".select-option")];
+  const current = options.indexOf(event.currentTarget);
+  if (event.key === "Escape") {
+    event.preventDefault();
+    closeCustomSelect();
+    trigger.focus();
+  } else if (["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) {
+    event.preventDefault();
+    const next = event.key === "Home"
+      ? 0
+      : event.key === "End"
+        ? options.length - 1
+        : (current + (event.key === "ArrowDown" ? 1 : -1) + options.length) % options.length;
+    options[next]?.focus();
   }
 }
 
